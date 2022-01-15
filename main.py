@@ -6,6 +6,7 @@
 （4）help:打印log信息
 """
 
+import torch
 from config import opt
 import os
 # import models
@@ -22,8 +23,6 @@ import csv
 from tqdm import tqdm
 
 """模型训练:定义网络，定义数据，定义损失函数和优化器，训练并计算指标，计算在验证集上的准确率"""
-
-
 def train(**kwargs):
     """根据命令行参数更新配置"""
     opt.parse(kwargs)
@@ -69,8 +68,6 @@ def train(**kwargs):
         confusion_matrix.reset()
         processBar = tqdm(train_dataloader, unit='step') # 构建tqdm进度条
         for ii, (data, label) in enumerate(processBar):
-            # print("ii:", ii, len(train_dataloader))
-            
             #训练模型参数
             data_in = Variable(data)
             target = Variable(label)
@@ -90,7 +87,7 @@ def train(**kwargs):
 
             #更新统计指标及可视化
             loss_meter.add(loss.item())
-            #print score.shape, target.shape
+            #print(score.shape, target.shape)
             confusion_matrix.add(score.detach(), target.detach())
 
             if ii % opt.print_freq == opt.print_freq - 1:
@@ -103,7 +100,8 @@ def train(**kwargs):
 
         #model.save()
         name = time.strftime('model' + '%m%d_%H_%M_%S.pth')
-        t.save(model.state_dict(), 'checkpoints/' + name)
+        t.save(model.state_dict(), 'checkpoints/' + name)  # 保存模型
+
         """计算验证集上的指标及可视化"""
         val_cm, val_accuracy = val(model, val_dataloader)
         vis.plot('val_accuracy', val_accuracy)
@@ -116,8 +114,7 @@ def train(**kwargs):
                     lr=lr))
 
         processBar.set_description("[%d/%d] Loss: %.4f, Acc: %.4f" % (epoch, opt.max_epoch, loss.item(), val_accuracy.item()))
-        print("epoch:", epoch, "loss:",
-              loss_meter.value()[0], "accuracy:", val_accuracy)
+        print("epoch:", epoch, "loss:", loss_meter.value()[0], "accuracy:", val_accuracy)
               
         """如果损失不再下降，则降低学习率"""
         if loss_meter.value()[0] > previous_loss:
@@ -130,18 +127,15 @@ def train(**kwargs):
 
 
 """计算模型在验证集上的准确率等信息"""
-
-
 @t.no_grad()
 def val(model, dataloader):
-
     model.eval()  #将模型设置为验证模式
-
-    confusion_matrix = meter.ConfusionMeter(2)
+    confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
     for ii, data in enumerate(dataloader):
         data_in, label = data
-        val_input = Variable(data_in, volatile=True)
-        val_label = Variable(label.long(), volatile=True)
+        with torch.no_grad:
+            val_input = Variable(data_in)
+            val_label = Variable(label.long())
         if opt.use_gpu:
             val_input = val_input.cuda()
             val_label = val_label.cuda()
@@ -157,8 +151,6 @@ def val(model, dataloader):
 
 
 """"""
-
-
 def test(**kwargs):
     opt.parse(kwargs)
 
@@ -196,8 +188,6 @@ def test(**kwargs):
 
 
 """"""
-
-
 def write_csv(results, file_name):
     with open(file_name, "w") as f:
         writer = csv.writer(f)

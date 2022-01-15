@@ -16,3 +16,32 @@ python -m visdom.server
 
 <img src="image/README/1642180701224.png" alt="1642180701224.png" style="zoom:50%;" />
 
+利用visdom来记录训练过程中loss的变化和每次epoch的accuracy变化图像。
+
+每`print_freq`一组记录`loss`变化图像：
+
+```python
+if ii % opt.print_freq == opt.print_freq - 1:
+    vis.plot('loss', loss_meter.value()[0])
+```
+
+记录每次训练`accuracy`变化图像：
+
+```python
+vis.plot('val_accuracy', val_accuracy)
+```
+
+计算验证集上的指标及可视化：
+
+```python
+vis.log(
+    "epoch:{epoch},lr:{lr},loss:{loss},train_cm:{train_cm},val_cm:{val_cm}"
+    .format(epoch=epoch,
+            loss=loss_meter.value()[0],
+            val_cm=str(val_cm.value()),
+            train_cm=str(confusion_matrix.value()),
+            lr=lr))
+```
+
+
+
