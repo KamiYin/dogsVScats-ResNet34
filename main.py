@@ -27,7 +27,7 @@ from tqdm import tqdm
 def train(**kwargs):
     """根据命令行参数更新配置"""
     opt.parse(kwargs)
-    vis = Visualizer(opt.env)
+    vis = Visualizer(opt.env) # visdom环境
 
     """(1)step1:加载网络，若有预训练模型也加载"""
     # model = getattr(models,opt.model)()
@@ -35,7 +35,7 @@ def train(**kwargs):
     model.fc = nn.Linear(512, 2)
     # if opt.load_model_path:
     #     model.load(opt.load_model_path)
-    if opt.use_gpu:  #GPU
+    if opt.use_gpu:  # GPU
         model.cuda()
 
     """(2)step2:处理数据"""
