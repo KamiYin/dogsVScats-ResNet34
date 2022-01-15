@@ -39,7 +39,7 @@ def train(**kwargs):
 
     """(2)step2:处理数据"""
     train_data = DogCat(opt.train_data_root, train=True)  #训练集
-    val_data = DogCat(opt.train_data_root, train=False)  #验证集
+    val_data = DogCat(opt.train_data_root, train=False)  #验证集，从训练集划分出20%作测试集
 
     train_dataloader = DataLoader(train_data,
                                   opt.batch_size,
@@ -47,20 +47,22 @@ def train(**kwargs):
                                   num_workers=opt.num_workers)
     val_dataloader = DataLoader(val_data,
                                 opt.batch_size,
-                                shuffle=False,
+                                shuffle=False, # 测试集不做乱序处理
                                 num_workers=opt.num_workers)
 
     """(3)step3:定义损失函数和优化器"""
     criterion = t.nn.CrossEntropyLoss()  #交叉熵损失
     lr = opt.lr  #学习率
+    # 使用SGD优化器
     optimizer = t.optim.SGD(model.parameters(),
                             lr=opt.lr,
                             weight_decay=opt.weight_decay)
 
     """(4)step4:统计指标，平滑处理之后的损失，还有混淆矩阵"""
-    loss_meter = meter.AverageValueMeter()
-    confusion_matrix = meter.ConfusionMeter(2)
-    previous_loss = 1e10
+    # torchnet.meter 提供了一种标准化的方法来测量一系列不同的测量，这使得测量模型的各种属性变得容易。
+    loss_meter = meter.AverageValueMeter() # loss的
+    confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
+    previous_loss = 1e10 # 初始化loss
 
     """(5)开始训练"""
     for epoch in range(opt.max_epoch):
