@@ -60,41 +60,42 @@ def train(**kwargs):
 
     """(4)step4:统计指标，平滑处理之后的损失，还有混淆矩阵"""
     # torchnet.meter 提供了一种标准化的方法来测量一系列不同的测量，这使得测量模型的各种属性变得容易。
-    loss_meter = meter.AverageValueMeter() # loss的
+    loss_meter = meter.AverageValueMeter() # 跟踪loss统计量
     confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
     previous_loss = 1e10 # 初始化loss
 
     """(5)开始训练"""
     for epoch in range(opt.max_epoch):
+        # 初始化loss的统计量和混淆矩阵
         loss_meter.reset()
         confusion_matrix.reset()
         processBar = tqdm(train_dataloader, unit='step') # 构建tqdm进度条
+
         for ii, (data, label) in enumerate(processBar):
-            #训练模型参数
+            # 训练模型参数
             data_in = Variable(data)
             target = Variable(label)
             if opt.use_gpu:
                 data_in = data_in.cuda()
                 target = target.cuda()
 
-            #梯度清零
+            # 梯度清零
             optimizer.zero_grad()
-            score = model(data_in)
+            out = model(data_in)
 
-            loss = criterion(score, target)
+            loss = criterion(out, target) # 交叉熵损失
             loss.backward()  #反向传播
 
-            #更新参数
-            optimizer.step()
+            optimizer.step() # 使用SGD优化器更新参数
 
-            #更新统计指标及可视化
+            # 更新统计指标及可视化
             loss_meter.add(loss.item())
-            #print(score.shape, target.shape)
-            confusion_matrix.add(score.detach(), target.detach())
+            # print(out.shape, target.shape)
+            confusion_matrix.add(out.detach(), target.detach())
 
+            # 每print_freq组数据记录一次loss（平滑处理），在visdom输出
             if ii % opt.print_freq == opt.print_freq - 1:
                 vis.plot('loss', loss_meter.value()[0])
-
                 if os.path.exists(opt.debug_file):
                     import ipdb
                     ipdb.set_trace()
@@ -102,7 +103,7 @@ def train(**kwargs):
 
         #model.save()
         name = time.strftime('model' + '%m%d_%H_%M_%S.pth')
-        t.save(model.state_dict(), 'checkpoints/' + name)  # 保存模型
+        t.save(model.state_dict(), 'checkpoints/' + name)  # 保存epoch个模型
 
         """计算验证集上的指标及可视化"""
         val_cm, val_accuracy = val(model, val_dataloader)
@@ -130,7 +131,7 @@ def train(**kwargs):
 
 """计算模型在验证集上的准确率等信息"""
 @t.no_grad()
-def val(model, dataloader):
+def val(model, dataloader): # 返回混淆矩阵和正确率
     model.eval()  #将模型设置为验证模式
     confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
     for ii, data in enumerate(dataloader):
@@ -142,8 +143,8 @@ def val(model, dataloader):
             val_input = val_input.cuda()
             val_label = val_label.cuda()
 
-        score = model(val_input)
-        confusion_matrix.add(score.detach().squeeze(), label.long())
+        out = model(val_input)
+        confusion_matrix.add(out.detach().squeeze(), label.long())
 
     model.train()  #模型恢复为训练模式
     cm_value = confusion_matrix.value()
@@ -176,9 +177,9 @@ def test(**kwargs):
         data_in = Variable(data, volatile=True)
         if opt.use_gpu:
             data_in = data_in.cuda()
-        score = model(data_in)
+        out = model(data_in)
         path = path.numpy().tolist()
-        _, predicted = t.max(score.data, 1)
+        _, predicted = t.max(out.data, 1)
         predicted = predicted.data.cpu().numpy().tolist()
         res = ""
         for (i, j) in zip(path, predicted):
