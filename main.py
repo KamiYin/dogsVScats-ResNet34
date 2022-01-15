@@ -65,7 +65,6 @@ def train(**kwargs):
 
     """(5)开始训练"""
     for epoch in range(opt.max_epoch):
-
         loss_meter.reset()
         confusion_matrix.reset()
         processBar = tqdm(train_dataloader, unit='step') # 构建tqdm进度条

@@ -17,18 +17,18 @@ class DefaultConfig(object):
 
     model = "ResNet34"  #使用的模型
 
-    train_data_root = "./data/catvsdog/train/"  #训练集存放路径
-    test_data_root = "./data/catvsdog/test/"  #测试集存放路径
+    train_data_root = "./data/catvsdog/train/"  # 训练集存放路径
+    test_data_root = "./data/catvsdog/test/"  # 测试集存放路径
 
-    load_model_path = None  #加载预训练模型的路径，None表示不加载
+    load_model_path = None  # 加载预训练模型的路径，None表示不加载
 
     batch_size = 8  # batch_size
-    use_gpu = False
-    num_workers = 4
-    print_freq = 50
+    use_gpu = False # 使用gpu优化
+    num_workers = 4 # 用来加载数据的进程数
+    print_freq = 50 # 记录loss的频率
 
     debug_file = ""
-    result_file = "./submission.csv"
+    result_file = "./submission.csv" # 存储结果的文件
 
     max_epoch = 10 # 训练次数
     lr = 0.001 # 学习率
