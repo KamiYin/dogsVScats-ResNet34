@@ -122,7 +122,7 @@ def train(**kwargs):
         """如果损失不再下降，则降低学习率"""
         if loss_meter.value()[0] > previous_loss:
             lr = lr * opt.lr_decay
-            for param_group in optimizer.param_groups:
+            for param_group in optimizer.param_groups: # 下降SGD优化器中的学习率
                 param_group["lr"] = lr
 
         previous_loss = loss_meter.value()[0]
@@ -132,7 +132,7 @@ def train(**kwargs):
 """计算模型在验证集上的准确率等信息"""
 @t.no_grad()
 def val(model, dataloader): # 返回混淆矩阵和正确率
-    model.eval()  #将模型设置为验证模式
+    model.eval()  # 将模型设置为验证模式
     confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
     for ii, data in enumerate(dataloader):
         data_in, label = data
@@ -153,7 +153,7 @@ def val(model, dataloader): # 返回混淆矩阵和正确率
     return confusion_matrix, accuracy
 
 
-""""""
+"""测试部分，使用模型对测试集数据进行分类，并将分类结果存储到csv文件中"""
 def test(**kwargs):
     opt.parse(kwargs)
 
@@ -167,11 +167,10 @@ def test(**kwargs):
 
     #model
     model = models.resnet34(pretrained=True)
-    model.fc = nn.Linear(512, 2)
-    model.load_state_dict(t.load('./model.pth'))
-    if opt.use_gpu:
-        model.cuda()
-    model.eval()
+    model.fc = nn.Linear(512, 2) # 设置全连接层
+    model.load_state_dict(t.load('./model.pth')) # 加载模型
+    if opt.use_gpu: model.cuda() # gpu优化
+    model.eval() # 将模型设置为验证模式
 
     for ii, (data, path) in enumerate(test_dataloader):
         data_in = Variable(data, volatile=True)
@@ -190,7 +189,7 @@ def test(**kwargs):
     return results
 
 
-""""""
+"""输出识别结果到csv文件"""
 def write_csv(results, file_name):
     with open(file_name, "w") as f:
         writer = csv.writer(f)

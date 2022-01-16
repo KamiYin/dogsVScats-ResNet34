@@ -94,8 +94,6 @@ confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
 previous_loss = 1e10 # 初始化loss
 ```
 
-
-
 #### 下降学习率
 
 作者在训练过程中，当出现loss不再下降的时候，下降学习率。
