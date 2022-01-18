@@ -20,27 +20,27 @@ class DogCat(data.Dataset):
         self.test = test
         imgs = [os.path.join(root, img) for img in os.listdir(root)]  #获取root路径下所有图片的地址
 
-        #print imgs
+        # print imgs
 
-        #test1:data/test1/1.jpg
-        #train:data/train/cat.1.jpg
-        if self.test:  #根据不同的分类对图片按序号排序
+        # test1:data/test1/1.jpg
+        # train:data/train/cat.1.jpg
+        if self.test:  # 根据不同的分类对图片按序号排序
             imgs = sorted(imgs, key=lambda x: int(x.split('.')[-2].split('/')[-1]))
         else:
             imgs = sorted(imgs, key=lambda x: int(x.split('.')[-2]))
 
         #print imgs
 
-        imgs_num = len(imgs)  #图片数量，数据集的规模
+        imgs_num = len(imgs)  # 图片数量，数据集的规模
 
-        #print imgs_num
+        # print imgs_num
         """进行数据集的划分"""
         if self.test:
-            self.imgs = imgs  #测试集
+            self.imgs = imgs  # 测试集
         elif train:
-            self.imgs = imgs[:int(0.8 * imgs_num)]  #训练集
+            self.imgs = imgs[:int(0.8 * imgs_num)]  # 训练集，取前80%
         else:
-            self.imgs = imgs[int(0.8 * imgs_num):]  #验证集
+            self.imgs = imgs[int(0.8 * imgs_num):]  # 验证集，取后20%
         """数据转换操作，测试验证和训练的数据转换有所区别"""
         if transforms is None:
             normalize = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -56,7 +56,7 @@ class DogCat(data.Dataset):
                 self.transforms = T.Compose([
                     T.Resize(256),
                     T.RandomResizedCrop(224),
-                    T.RandomHorizontalFlip(),
+                    T.RandomHorizontalFlip(), # 随机水平翻转
                     T.ToTensor(), normalize
                 ])
 
@@ -68,9 +68,9 @@ class DogCat(data.Dataset):
         img_path = self.imgs[index]
 
         if self.test:  #是测试集
-            label = int(self.imgs[index].split('.')[-2].split('/')[-1])
+            label = int(self.imgs[index].split('.')[-2].split('/')[-1]) # id
         else:
-            label = 1 if 'dog' in img_path.split('/')[-1] else 0
+            label = 1 if 'dog' in img_path.split('/')[-1] else 0 # 1:dog 0:cat
 
         data = Image.open(img_path)
         data = self.transforms(data)

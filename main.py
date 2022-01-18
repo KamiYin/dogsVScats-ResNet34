@@ -29,13 +29,12 @@ def train(**kwargs):
     vis = Visualizer(opt.env) # visdom环境
 
     """(1)step1:加载网络，若有预训练模型也加载"""
-    # model = getattr(models,opt.model)()
+    # model = getattr(models, opt.model)() # getattr()用于返回models对象的opt.model()属性值
     model = models.resnet34(pretrained=True)
-    model.fc = nn.Linear(512, 2)
+    model.fc = nn.Linear(512, 2) # 设置全连接层的张量大小
     # if opt.load_model_path:
     #     model.load(opt.load_model_path)
-    if opt.use_gpu:  # GPU
-        model.cuda()
+    if opt.use_gpu: model.cuda() # GPU
 
     """(2)step2:处理数据"""
     train_data = DogCat(opt.train_data_root, train=True)  #训练集
@@ -51,7 +50,7 @@ def train(**kwargs):
                                 num_workers=opt.num_workers)
 
     """(3)step3:定义损失函数和优化器"""
-    criterion = t.nn.CrossEntropyLoss()  #交叉熵损失
+    criterion = t.nn.CrossEntropyLoss()  # 定义loss计算方法，交叉熵损失
     lr = opt.lr  #学习率
     # 使用SGD优化器
     optimizer = t.optim.SGD(model.parameters(),
@@ -74,17 +73,16 @@ def train(**kwargs):
         for ii, (data, label) in enumerate(processBar):
             # 训练模型参数
             data_in = Variable(data)
-            target = Variable(label)
+            target = Variable(label) # 将数据放置在PyTorch的Variable节点中
             if opt.use_gpu:
                 data_in = data_in.cuda()
                 target = target.cuda()
 
-            # 梯度清零
-            optimizer.zero_grad()
-            out = model(data_in)
+            optimizer.zero_grad() # 梯度清零
+            out = model(data_in) # 调用forward()方法计算网络输出值
 
             loss = criterion(out, target) # 交叉熵损失
-            loss.backward()  #反向传播
+            loss.backward()  # 反向传播
 
             optimizer.step() # 使用SGD优化器更新参数
 
@@ -109,7 +107,7 @@ def train(**kwargs):
         val_cm, val_accuracy = val(model, val_dataloader)
         vis.plot('val_accuracy', val_accuracy)
         vis.log(
-            "epoch:{epoch},lr:{lr},loss:{loss},train_cm:{train_cm},val_cm:{val_cm}"
+            "epoch: {epoch}, lr:{lr}, loss: {loss}, train_cm: {train_cm}, val_cm: {val_cm}"
             .format(epoch=epoch,
                     loss=loss_meter.value()[0],
                     val_cm=str(val_cm.value()),
@@ -136,10 +134,10 @@ def val(model, dataloader): # 返回混淆矩阵和正确率
     confusion_matrix = meter.ConfusionMeter(2) # 混淆矩阵
     for ii, data in enumerate(dataloader):
         data_in, label = data
-        with torch.no_grad:
+        with torch.no_grad: # 不自动求导
             val_input = Variable(data_in)
             val_label = Variable(label.long())
-        if opt.use_gpu:
+        if opt.use_gpu: # GPU优化
             val_input = val_input.cuda()
             val_label = val_label.cuda()
 
@@ -157,13 +155,12 @@ def val(model, dataloader): # 返回混淆矩阵和正确率
 def test(**kwargs):
     opt.parse(kwargs)
 
-    #data
+    # data
     test_data = DogCat(opt.test_data_root, test=True)
     test_dataloader = DataLoader(test_data,
                                  batch_size=opt.batch_size,
                                  shuffle=False,
                                  num_workers=opt.num_workers)
-    results = []
 
     #model
     model = models.resnet34(pretrained=True)
@@ -172,16 +169,16 @@ def test(**kwargs):
     if opt.use_gpu: model.cuda() # gpu优化
     model.eval() # 将模型设置为验证模式
 
-    for ii, (data, path) in enumerate(test_dataloader):
+    results = []
+    for ii, (data, label) in enumerate(test_dataloader):
         data_in = Variable(data, volatile=True)
-        if opt.use_gpu:
-            data_in = data_in.cuda()
+        if opt.use_gpu: data_in = data_in.cuda()
         out = model(data_in)
-        path = path.numpy().tolist()
+        label = label.numpy().tolist() # 图片id
         _, predicted = t.max(out.data, 1)
         predicted = predicted.data.cpu().numpy().tolist()
         res = ""
-        for (i, j) in zip(path, predicted):
+        for (i, j) in zip(label, predicted):
             res = "Dog" if j == 1 else "Cat"
             results.append([i, "".join(res)])
 

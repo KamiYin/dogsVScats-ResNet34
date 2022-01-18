@@ -33,7 +33,7 @@ class DefaultConfig(object):
     max_epoch = 10 # 训练次数
     lr = 0.001 # 学习率
     lr_decay = 0.95 # 学习率的降低速率
-    weight_decay = 1e-4  #损失函数
+    weight_decay = 1e-4  # 权值衰减，调节模型复杂度对损失函数的影响，防止过拟合
 
     """根据字典更新config参数，便于命令行更改参数"""
     def parse(self, kwargs):
